@@ -1,0 +1,124 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Clients Management</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+    <link rel="stylesheet" href="/bootstrap.min.css" media="screen"/>
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <div class="col-lg-3 col-md-4 col-sm-6 col-lg-offset-3">
+            <a href="/clients"><img src="/logo.png" style="width:100%;"/></a>
+        </div>
+    </div>
+    <div class="page-header" id="banner">
+        <div class="row">
+            <div class="col-lg-8 col-md-7 col-sm-6">
+                <h1>Add a client</h1>
+                <form>
+                    <div class="form-group">
+                        <label for="client_name">Client Name</label>
+                        <input type="text" class="form-control" id="client_name"/>
+                    </div>
+                    <button type="submit" class="btn btn-default" id="btn_submit">Add New Client</button>
+                </form>
+            </div>
+        </div>
+        <br />
+        <br />
+        <div class="row">
+            <div class="col-lg-8 col-md-7 col-sm-6">
+                <h1>List of clients</h1>
+
+                <table class="table table-striped table-hover">
+                    <thead>
+                    <tr>
+                        <th>Client ID</th>
+                        <th>Client Name</th>
+                        <th>Orders</th>
+                        <th>Edit</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+
+                    <tr th:each="client : ${clients}">
+                        <td th:text="${client.clientId}"></td>
+                        <td th:text="${client.clientName}"></td>
+                        <td th:id="${client.clientId} + _orders" th:text="${client.clientOrders}"></td>
+                        <td th:id="${client.clientId}">
+                            <button class="btn btn-danger delete-order">Delete</button>
+                            <button class="btn add-client">Add Order</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div th:replace="fragments/footer :: footer">...</div>
+</div>
+<script src="/jquery.js" type="application/javascript"></script>
+<script type="application/javascript">
+    $(document).ready(function () {
+        $('#btn_submit').on("click",function(e){
+            e.preventDefault();
+            var name = $("#client_name").val();
+            if($.trim(name)===""){
+                alert("You must fill the first name");
+            }
+            else {
+                $.ajax({
+                   type:"POST",
+                   url:"/createclient",
+                   data:{name:name},
+                   success:function (data) {
+                           window.location.reload();
+                   }
+                });
+            }
+        });
+
+        //Complete order button handler
+
+        $('.delete-order').on("click", function(e){
+            e.preventDefault();
+
+
+
+            if(confirm("Are you sure the order is complete?")){
+                var Id = parseInt($(this).closest("td").attr("id"));
+
+                $.ajax({
+                    type:"POST",
+                    url:"/removeclient",
+                    data:{Id:Id},
+                    success:function (data) {
+                        $(".delete-order").closest("td#"+data).parent("tr").fadeOut("slow",function(){
+                            $(".delete-order").closest("td#"+data).parent("tr").remove();
+                        });
+                    }
+                });
+            }
+
+        });
+
+        $('.add-client').on("click", function(e){
+                var Id = parseInt($(this).closest("td").attr("id"));
+
+                $.ajax({
+                    type:"POST",
+                    url:"/addorder",
+                    data:{Id:Id},
+                    success:function (data) {
+                        var id = JSON.parse(data).Id;
+                        $("#"+ id + "_orders").text(JSON.parse(data).orders);
+                    }
+                });
+        });
+
+    });
+</script>
+</body>
+</html>
